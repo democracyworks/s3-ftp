@@ -2,10 +2,11 @@
   (:require [aws.sdk.s3 :as s3]
             [turbovote.resource-config :refer [config]])
   (:import [java.io File]
-           [org.apache.ftpserver FtpServerFactory]
+           [org.apache.ftpserver FtpServerFactory DataConnectionConfigurationFactory]
            [org.apache.ftpserver.listener ListenerFactory]
            [org.apache.ftpserver.usermanager PropertiesUserManagerFactory]
-           [org.apache.ftpserver.ftplet DefaultFtplet]))
+           [org.apache.ftpserver.ftplet DefaultFtplet])
+  (:gen-class))
 
 (def S3CopierFtplet
   (proxy [DefaultFtplet] []
@@ -33,10 +34,18 @@
                                (.setFile user-file))]
     (.createUserManager user-manager-factory)))
 
+(defn data-connection-configuration [config]
+  (let [factory (DataConnectionConfigurationFactory.)]
+    (some->> config :passive-ports (.setPassivePorts factory))
+    (some->> config :passive-external-address (.setPassiveExternalAddress factory))
+    (.createDataConnectionConfiguration factory)))
+
 (defn -main []
   (let [server-factory (FtpServerFactory.)
+        active-port (or (config :ftp :active-port) 2221)
         listener-factory (doto (ListenerFactory.)
-                           (.setPort 2221))
+                           (.setPort active-port)
+                           (.setDataConnectionConfiguration (data-connection-configuration (config :ftp))))
         server (.createServer
                 (doto (FtpServerFactory.)
                   (.addListener "default" (.createListener listener-factory))

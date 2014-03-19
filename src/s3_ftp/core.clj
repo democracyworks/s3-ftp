@@ -1,15 +1,23 @@
 (ns s3-ftp.core
   (:require [aws.sdk.s3 :as s3]
-            [turbovote.resource-config :refer [config]])
+            [turbovote.resource-config :refer [config]]
+            [clojure.tools.logging :as logging])
   (:import [java.io File]
            [org.apache.ftpserver FtpServerFactory DataConnectionConfigurationFactory]
            [org.apache.ftpserver.listener ListenerFactory]
            [org.apache.ftpserver.usermanager PropertiesUserManagerFactory]
-           [org.apache.ftpserver.ftplet DefaultFtplet])
+           [org.apache.ftpserver.ftplet DefaultFtplet FtpletResult])
   (:gen-class))
+
+(def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "QUIT" "STOR"})
 
 (def S3CopierFtplet
   (proxy [DefaultFtplet] []
+    (beforeCommand [session request]
+      (let [cmd (-> request (.getCommand) clojure.string/upper-case)]
+        (if (allowed-commands cmd)
+          (proxy-super beforeCommand session request)
+          FtpletResult/DISCONNECT)))
     (onUploadEnd [session request]
       (let [user-home (-> session
                           (.getUser)
@@ -20,10 +28,11 @@
                          (.getAbsolutePath))
             filename (.getArgument request)
             file (File. (str user-home curr-dir filename))]
-        (s3/put-object (config :aws-credentials)
-                       (config :aws-bucket-name)
-                       filename file)
-        (.delete file)
+        (try (s3/put-object (config :aws-credentials)
+                            (config :aws-bucket-name)
+                            filename file)
+             (.delete file)
+             (catch Exception e (logging/error (str "S3 Upload failed: " (.getMessage e)))))
         nil))))
 
 (defn user-manager []

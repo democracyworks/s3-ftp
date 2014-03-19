@@ -23,7 +23,8 @@
         (s3/put-object (config :aws-credentials)
                        (config :aws-bucket-name)
                        filename file)
-        (.delete file)))))
+        (.delete file)
+        nil))))
 
 (defn user-manager []
   (let [user-file (-> "users.properties"

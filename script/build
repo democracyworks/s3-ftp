@@ -9,7 +9,6 @@ echo "Done."
 
 echo "Building s3-ftp..."
 
-docker run --rm=true -v `pwd`:/s3-ftp \
-           turbovote/s3-ftp-build
+docker run -v `pwd`:/s3-ftp turbovote/s3-ftp-build
 
 echo "Done."

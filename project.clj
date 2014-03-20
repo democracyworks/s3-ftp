@@ -11,5 +11,6 @@
                  [clj-aws-s3 "0.3.8"]
                  [turbovote.resource-config "0.1.0"]]
   :main s3-ftp.core
-  :profiles {:uberjar {:aot [s3-ftp.core]}}
+  :profiles {:build [:uberjar]
+             :uberjar {:aot [s3-ftp.core]}}
   :uberjar-name "s3-ftp.jar")

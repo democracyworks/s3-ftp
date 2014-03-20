@@ -1,0 +1,20 @@
+box: wercker-labs/docker
+build:
+  steps:
+    - script:
+        name: build the app
+        code: |
+          script/build
+    - script:
+        name: build the container
+        code: |
+          docker build -t quay.io/democracyworks/s3-ftp .
+    - script:
+        name: login to quay.io
+        hide-from-log: true
+        code: |
+          echo $QUAY_DOCKERCFG > $HOME/.dockercfg
+    - script:
+        name: push the container to the private registry
+        code: |
+          docker push quay.io/democracyworks/s3-ftp

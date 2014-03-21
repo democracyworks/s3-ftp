@@ -9,7 +9,7 @@
            [org.apache.ftpserver.ftplet DefaultFtplet FtpletResult])
   (:gen-class))
 
-(def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "QUIT" "STOR"})
+(def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "TYPE" "QUIT" "STOR"})
 
 (def S3CopierFtplet
   (proxy [DefaultFtplet] []

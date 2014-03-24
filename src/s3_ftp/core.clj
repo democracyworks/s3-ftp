@@ -1,5 +1,6 @@
 (ns s3-ftp.core
   (:require [aws.sdk.s3 :as s3]
+            [cemerick.bandalore :as sqs]
             [turbovote.resource-config :refer [config]]
             [clojure.tools.logging :as logging])
   (:import [java.io File]
@@ -11,7 +12,7 @@
 
 (def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "PASV" "TYPE" "QUIT" "STOR"})
 
-(def S3CopierFtplet
+(defn S3CopierFtplet [sqs-client sqs-queue]
   (proxy [DefaultFtplet] []
     (beforeCommand [session request]
       (let [cmd (-> request (.getCommand) clojure.string/upper-case)]
@@ -31,6 +32,7 @@
         (try (s3/put-object (config :aws-credentials)
                             (config :aws-bucket-name)
                             filename file)
+             (sqs/send sqs-client sqs-queue filename)
              (.delete file)
              (catch Exception e (logging/error (str "S3 Upload failed: " (.getMessage e)))))
         nil))))
@@ -50,8 +52,16 @@
     (some->> config :passive-external-address (.setPassiveExternalAddress factory))
     (.createDataConnectionConfiguration factory)))
 
+(defn create-client []
+  (if (config :aws-credentials)
+    (sqs/create-client (config :aws-credentials :access-key)
+                       (config :aws-credentials :secret-key))
+    (sqs/create-client)))
+
 (defn -main []
-  (let [server-factory (FtpServerFactory.)
+  (let [sqs-client (create-client)
+        sqs-queue (sqs/create-queue sqs-client (config :sqs-queue-name))
+        server-factory (FtpServerFactory.)
         active-port (or (config :ftp :active-port) 2221)
         listener-factory (doto (ListenerFactory.)
                            (.setPort active-port)
@@ -60,5 +70,5 @@
                 (doto (FtpServerFactory.)
                   (.addListener "default" (.createListener listener-factory))
                   (.setUserManager (user-manager))
-                  (.setFtplets (java.util.HashMap. {"s3CopierFtplet" S3CopierFtplet}))))]
+                  (.setFtplets (java.util.HashMap. {"s3CopierFtplet" (S3CopierFtplet sqs-client sqs-queue)}))))]
     (.start server)))

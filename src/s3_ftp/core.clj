@@ -2,7 +2,8 @@
   (:require [aws.sdk.s3 :as s3]
             [cemerick.bandalore :as sqs]
             [turbovote.resource-config :refer [config]]
-            [clojure.tools.logging :as logging])
+            [clojure.tools.logging :as logging]
+            [s3-ftp.data-readers])
   (:import [java.io File]
            [org.apache.ftpserver FtpServerFactory DataConnectionConfigurationFactory]
            [org.apache.ftpserver.listener ListenerFactory]
@@ -53,14 +54,16 @@
     (.createDataConnectionConfiguration factory)))
 
 (defn create-client []
-  (if (config :aws-credentials)
-    (sqs/create-client (config :aws-credentials :access-key)
-                       (config :aws-credentials :secret-key))
-    (sqs/create-client)))
+  (let [client (if (config :aws-credentials)
+                 (sqs/create-client (config :aws-credentials :access-key)
+                                    (config :aws-credentials :secret-key))
+                 (sqs/create-client))]
+    (.setRegion client (config :sqs :region))
+    client))
 
 (defn -main []
   (let [sqs-client (create-client)
-        sqs-queue (sqs/create-queue sqs-client (config :sqs-queue-name))
+        sqs-queue (sqs/create-queue sqs-client (config :sqs :queue-name))
         server-factory (FtpServerFactory.)
         active-port (or (config :ftp :active-port) 2221)
         listener-factory (doto (ListenerFactory.)

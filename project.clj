@@ -10,7 +10,7 @@
                  [org.slf4j/slf4j-jdk14 "1.5.2" :exclusions [org.slf4j/slf4j-api]]
                  [clj-aws-s3 "0.3.8"]
                  [com.cemerick/bandalore "0.0.5"]
-                 [turbovote.resource-config "0.1.0"]]
+                 [turbovote.resource-config "0.1.1"]]
   :main s3-ftp.core
   :profiles {:build [:uberjar]
              :uberjar {:aot [s3-ftp.core]}}

@@ -1,3 +1,0 @@
-{:aws-credentials {:access-key "your-aws-access-key"
-                   :secret-key "your-aws-secret-key"}
- :aws-bucket-name "your-bucket-name"}

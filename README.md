@@ -40,11 +40,11 @@ To run it inside a docker container, first build the uberjar by running
 
 Then build your base docker image by running 
 
-`docker build -t s3-ftp .`
+`docker build -t democracyworks/s3-ftp .`
 
 This image contains no configuration and cannot be run. You need to build another image that uses `s3-ftp` as it's base image, creates the homedirectory you specified in your `users.properties`, exposes your active and passive ports and has in its build context a `resources` directory containing your `config.edn` and `user.properties` files.
 
-`docker build -t my-s3-ftp path/to/other/dockerfile`
+`docker build -t democracyworks/my-s3-ftp path/to/other/dockerfile`
 
 Finally, run the docker image making sure to expose your configured active and passive ports.
 

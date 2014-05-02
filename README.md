@@ -42,7 +42,7 @@ Then build your base docker image by running
 
 `docker build -t s3-ftp .`
 
-This image contains no configuration and cannot be run. You need to build another image that uses `s3-ftp` as it's base image, creates the homedirectory you specified in your `users.properties`, exposes your active and passive ports and has in its build context a `resource` directory containing your `config.edn` and `user.properties` files.
+This image contains no configuration and cannot be run. You need to build another image that uses `s3-ftp` as it's base image, creates the homedirectory you specified in your `users.properties`, exposes your active and passive ports and has in its build context a `resources` directory containing your `config.edn` and `user.properties` files.
 
 `docker build -t my-s3-ftp path/to/other/dockerfile`
 

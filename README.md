@@ -11,11 +11,11 @@ You will need a config.edn file available as a resource with the
 following shape:
 
 ```clojure
-{:aws-credentials {:access-key "your-access-key"
-                   :secret-key "your-secret-key"}
- :aws-bucket-name "bucket-to-put-uploads-in"
- :sqs {:region #aws/region "US_WEST_2" ; see below
-       :queue-name "queue-name-to-put-s3-keys-in"}
+{:aws {:creds {:access-key "your-access-key"
+               :secret-key "your-secret-key"}}
+       :s3 {:bucket "bucket-to-put-uploads-in"}
+       :sqs {:region #aws/region "US_WEST_2" ; see below
+             :queue "queue-name-to-put-s3-keys-in"}}
  :ftp {:passive-external-address "your-accessible-hostname.org" ; optional. overrides using machines hostname
        :passive-ports "1234-2345" ; optional. overrides default passive ports
        :active-port 21 ; optional. overrides default active port

@@ -30,8 +30,8 @@
                          (.getAbsolutePath))
             filename (.getArgument request)
             file (File. (str user-home curr-dir filename))]
-        (try (s3/put-object (config :aws-credentials)
-                            (config :aws-bucket-name)
+        (try (s3/put-object (config :aws :creds)
+                            (config :aws :s3 :bucket)
                             filename file)
              (sqs/send sqs-client sqs-queue filename)
              (.delete file)
@@ -54,16 +54,16 @@
     (.createDataConnectionConfiguration factory)))
 
 (defn create-client []
-  (let [client (if (config :aws-credentials)
-                 (sqs/create-client (config :aws-credentials :access-key)
-                                    (config :aws-credentials :secret-key))
+  (let [client (if (config :aws :creds)
+                 (sqs/create-client (config :aws :creds :access-key)
+                                    (config :aws :creds :secret-key))
                  (sqs/create-client))]
-    (.setRegion client (config :sqs :region))
+    (.setRegion client (config :aws :sqs :region))
     client))
 
 (defn -main []
   (let [sqs-client (create-client)
-        sqs-queue (sqs/create-queue sqs-client (config :sqs :queue-name))
+        sqs-queue (sqs/create-queue sqs-client (config :aws :sqs :queue))
         server-factory (FtpServerFactory.)
         active-port (or (config :ftp :active-port) 2221)
         listener-factory (doto (ListenerFactory.)

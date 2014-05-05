@@ -1,5 +1,5 @@
-FROM quay.io/democracyworks/clojure-api:latest
-MAINTAINER TurboVote <dev@turbovote.org>
+FROM democracyworks/clojure-api:latest
+MAINTAINER Democracy Works, Inc. <dev@turbovote.org>
 
 ONBUILD ADD ./resources/ /var/local/s3-ftp/resources/
 

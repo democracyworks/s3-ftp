@@ -2,9 +2,12 @@ box: wercker-labs/docker
 build:
   steps:
     - script:
+        name: build the app
+        code: |
+          script/build
+    - script:
         name: build the container
         code: |
-          lein with-profile build uberjar
           docker build -t quay.io/democracyworks/s3-ftp .
     - script:
         name: login to quay.io

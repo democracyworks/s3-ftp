@@ -4,11 +4,11 @@
 set -e
 
 echo "Building Docker image for s3-ftp build..."
-docker build -t turbovote/s3-ftp-build - < Dockerfile.build
+docker build -t democracyworks/s3-ftp-build - < Dockerfile.build
 echo "Done."
 
 echo "Building s3-ftp..."
 
-docker run -v `pwd`:/s3-ftp turbovote/s3-ftp-build
+docker run -v `pwd`:/s3-ftp democracyworks/s3-ftp-build
 
 echo "Done."

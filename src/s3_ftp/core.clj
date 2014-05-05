@@ -29,13 +29,16 @@
                          (.getWorkingDirectory)
                          (.getAbsolutePath))
             filename (.getArgument request)
-            file (File. (str user-home curr-dir filename))]
+            file (File. (str user-home curr-dir filename))
+            s3-bucket (config :aws :s3 :bucket)]
         (try (s3/put-object (config :aws :creds)
-                            (config :aws :s3 :bucket)
+                            s3-bucket
                             filename file)
-             (sqs/send sqs-client sqs-queue filename)
+             (sqs/send sqs-client sqs-queue (pr-str {:bucket s3-bucket
+                                                     :filename filename}))
              (.delete file)
-             (catch Exception e (logging/error (str "S3 Upload failed: " (.getMessage e)))))
+             (catch Exception e (logging/error (str "S3 Upload failed: "
+                                                    (.getMessage e)))))
         nil))))
 
 (defn user-manager []

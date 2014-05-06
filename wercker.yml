@@ -8,7 +8,7 @@ build:
     - script:
         name: build the container
         code: |
-          docker build -t quay.io/democracyworks/s3-ftp .
+          docker build -t quay.io/democracyworks/s3-ftp:$WERCKER_GIT_BRANCH .
     - script:
         name: login to quay.io
         hide-from-log: true

@@ -13,7 +13,13 @@
 
 (def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "PASV" "TYPE" "QUIT" "STOR"})
 
-(defn S3CopierFtplet [sqs-client sqs-queue]
+(defn user-config
+  "Looks for a username specific config, and if not found, uses the default"
+  [username & keys]
+  (let [override-keys (concat [:user-overrides username] keys)]
+    (or (apply config override-keys) (apply config keys))))
+
+(defn S3CopierFtplet [sqs-client]
   (proxy [DefaultFtplet] []
     (beforeCommand [session request]
       (let [cmd (-> request (.getCommand) clojure.string/upper-case)]
@@ -21,17 +27,22 @@
           (proxy-super beforeCommand session request)
           FtpletResult/DISCONNECT)))
     (onUploadEnd [session request]
-      (let [user-home (-> session
-                          (.getUser)
-                          (.getHomeDirectory))
+      (let [user (.getUser session)
+            username (.getName user)
+            user-home (.getHomeDirectory user)
             curr-dir (-> session
                          (.getFileSystemView)
                          (.getWorkingDirectory)
                          (.getAbsolutePath))
             filename (.getArgument request)
             file (File. (str user-home curr-dir filename))
-            s3-bucket (config :aws :s3 :bucket)]
-        (try (s3/put-object (config :aws :creds)
+            s3-bucket (user-config username :aws :s3 :bucket)
+            queue-name (user-config username :aws :sqs :queue)
+            sqs-queue (sqs/create-queue sqs-client queue-name)]
+        (println "queue name" queue-name)
+        (println "bucket name" s3-bucket)
+        (println "creds" (user-config username :aws :creds))
+        (try (s3/put-object (user-config username :aws :creds)
                             s3-bucket
                             filename file)
              (sqs/send sqs-client sqs-queue (pr-str {:bucket s3-bucket
@@ -66,7 +77,6 @@
 
 (defn -main []
   (let [sqs-client (create-client)
-        sqs-queue (sqs/create-queue sqs-client (config :aws :sqs :queue))
         server-factory (FtpServerFactory.)
         active-port (or (config :ftp :active-port) 2221)
         listener-factory (doto (ListenerFactory.)
@@ -76,5 +86,5 @@
                 (doto (FtpServerFactory.)
                   (.addListener "default" (.createListener listener-factory))
                   (.setUserManager (user-manager))
-                  (.setFtplets (java.util.HashMap. {"s3CopierFtplet" (S3CopierFtplet sqs-client sqs-queue)}))))]
+                  (.setFtplets (java.util.HashMap. {"s3CopierFtplet" (S3CopierFtplet sqs-client)}))))]
     (.start server)))

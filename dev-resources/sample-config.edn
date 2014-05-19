@@ -1,0 +1,11 @@
+{:aws {:creds {:access-key "INSERT ACCESS-KEY"
+               :secret-key "INSERT SERCRET-KEY"}
+       :s3 {:bucket "default-bucket-name"}
+       :sqs {:region #aws/region "US_WEST_2"
+             :queue "default-queue-name"}}
+ :ftp {:passive-external-address "localdocker" ; optional. overrides using machines hostname
+       :passive-ports "1234-1235" ; optional. overrides default passive ports
+       :active-port 2221 ; optional. overrides default active port
+       }
+ :user-overrides {"admin" {:aws {:s3 {:bucket "user-specific-bucket-name"}
+                                 :sqs {:queue "user-specific-queue-name"}}}}}

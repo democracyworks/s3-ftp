@@ -31,7 +31,13 @@
                          (.getAbsolutePath))
             filename (.getArgument request)
             file (File. (str user-home curr-dir filename))
-            s3-bucket (config :aws :s3 :bucket)]
+            username (-> session
+                         (.getUser)
+                         (.getName)
+                         keyword)
+            s3-bucket (if-let [user-config (config :users username)]
+                          (get-in user-config [:aws :s3 :bucket])
+                          (config :aws :s3 :bucket))]
         (try (s3/put-object (config :aws :creds)
                             s3-bucket
                             filename file)

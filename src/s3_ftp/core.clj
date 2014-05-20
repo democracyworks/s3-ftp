@@ -11,7 +11,8 @@
            [org.apache.ftpserver.ftplet DefaultFtplet FtpletResult])
   (:gen-class))
 
-(def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "PASV" "TYPE" "QUIT" "STOR"})
+(def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "PASV" "TYPE"
+                        "QUIT" "STOR" "CWD"})
 
 (defn S3CopierFtplet [sqs-client sqs-queue]
   (proxy [DefaultFtplet] []

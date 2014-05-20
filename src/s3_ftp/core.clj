@@ -70,17 +70,23 @@
     (.setRegion client (config :aws :sqs :region))
     client))
 
-(defn -main []
+(defn start-server []
   (let [sqs-client (create-client)
         sqs-queue (sqs/create-queue sqs-client (config :aws :sqs :queue))
         server-factory (FtpServerFactory.)
         active-port (or (config :ftp :active-port) 2221)
         listener-factory (doto (ListenerFactory.)
                            (.setPort active-port)
-                           (.setDataConnectionConfiguration (data-connection-configuration (config :ftp))))
+                           (.setDataConnectionConfiguration
+                            (data-connection-configuration (config :ftp))))
         server (.createServer
                 (doto (FtpServerFactory.)
                   (.addListener "default" (.createListener listener-factory))
                   (.setUserManager (user-manager))
-                  (.setFtplets (java.util.HashMap. {"s3CopierFtplet" (S3CopierFtplet sqs-client sqs-queue)}))))]
-    (.start server)))
+                  (.setFtplets (java.util.HashMap.
+                                {"s3CopierFtplet"
+                                 (S3CopierFtplet sqs-client sqs-queue)}))))]
+    (doto server (.start))))
+
+(defn -main []
+  (start-server))

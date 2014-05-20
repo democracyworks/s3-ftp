@@ -34,10 +34,16 @@
         (try (s3/put-object (config :aws :creds)
                             s3-bucket
                             filename file)
-             (sqs/send sqs-client sqs-queue (pr-str {:bucket s3-bucket
-                                                     :filename filename}))
-             (.delete file)
-             (catch Exception e (logging/error (str "S3 Upload failed: "
+             (try (sqs/send sqs-client sqs-queue (pr-str {:bucket s3-bucket
+                                                          :filename filename}))
+                  (try (.delete file)
+                       (catch Exception e (logging/error
+                                           (str "Unable to delete local file: "
+                                                (.getMessage e)))))
+                  (catch Exception e (logging/error
+                                      (str "SQS message send failed: "
+                                           (.getMessage e)))))
+             (catch Exception e (logging/error (str "S3 upload failed: "
                                                     (.getMessage e)))))
         nil))))
 

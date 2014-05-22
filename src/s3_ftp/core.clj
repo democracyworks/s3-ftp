@@ -3,12 +3,14 @@
             [cemerick.bandalore :as sqs]
             [turbovote.resource-config :refer [config]]
             [clojure.tools.logging :as logging]
+            [clojure.java.io :as io]
             [s3-ftp.data-readers])
   (:import [java.io File]
            [org.apache.ftpserver FtpServerFactory DataConnectionConfigurationFactory]
            [org.apache.ftpserver.listener ListenerFactory]
            [org.apache.ftpserver.usermanager PropertiesUserManagerFactory]
-           [org.apache.ftpserver.ftplet DefaultFtplet FtpletResult])
+           [org.apache.ftpserver.ftplet DefaultFtplet FtpletResult]
+           [org.apache.ftpserver.ssl SslConfigurationFactory])
   (:gen-class))
 
 (def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "PASV" "TYPE"
@@ -87,6 +89,18 @@
                  (sqs/create-client))]
     (doto client (.setRegion (config :aws :sqs :region)))))
 
+(defn- ssl-configuration [listener-factory config]
+  "sets the ssl configuration on the ListenerFactory if the config exists"
+  (if config
+    (let [ks-name (some-> config :keystore :filename)
+          ts-name (some-> config :truststore :filename)
+          factory (SslConfigurationFactory.)]
+      (some->> ks-name io/resource io/file (.setKeystoreFile factory))
+      (some->> config :keystore :password (.setKeystorePassword factory))
+      (some->> ts-name io/resource io/file (.setTruststoreFile factory))
+      (some->> config :truststore :password (.setTruststorePassword factory))
+      (.setSslConfiguration listener-factory (.createSslConfiguration factory)))))
+
 (defn start-server []
   (let [sqs-client (create-sqs-client)
         server-factory (FtpServerFactory.)
@@ -94,7 +108,8 @@
         listener-factory (doto (ListenerFactory.)
                            (.setPort active-port)
                            (.setDataConnectionConfiguration
-                            (data-connection-configuration (config :ftp))))
+                            (data-connection-configuration (config :ftp)))
+                           (ssl-configuration (config :ssl)))
         server (.createServer
                 (doto (FtpServerFactory.)
                   (.addListener "default" (.createListener listener-factory))

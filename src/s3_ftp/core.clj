@@ -12,7 +12,7 @@
   (:gen-class))
 
 (def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "PASV" "TYPE"
-                        "QUIT" "STOR"})
+                        "QUIT" "STOR" "AUTH" "AUTH TLS" "AUTH SSL"})
 
 (defn- user-config [username]
   (config :user-overrides username))
@@ -37,7 +37,9 @@
       (let [cmd (-> request (.getCommand) clojure.string/upper-case)]
         (if (allowed-commands cmd)
           (proxy-super beforeCommand session request)
-          FtpletResult/DISCONNECT)))
+          (do
+            (logging/error "Command not allowed: " cmd)
+            FtpletResult/DISCONNECT))))
     (onUploadEnd [session request]
       (let [user-home (-> session (.getUser) (.getHomeDirectory))
             curr-dir (-> session

@@ -2,9 +2,9 @@
                :secret-key "test-secret-key"}
        :s3 {:bucket "democracyworks-s3-ftp-test"}
        :sqs {:region #aws/region "US_WEST_2"
-             :queue "s3-ftp-test"}}
+             :queue "democracyworks-s3-ftp-test"}}
  :ftp {:passive-external-address "localdocker"
        :passive-ports "50120-50121"
        :active-port 50021}
- :users {:user1 {:aws {:s3 {:bucket "democracyworks-user1-ftp-test"}
-                       :sqs {:queue "democracyworks-user1-ftp-test"}}}}}
+ :user-overrides {:user1 {:aws {:s3 {:bucket "democracyworks-user1-ftp-test"}
+                                :sqs {:queue "democracyworks-user1-ftp-test"}}}}}

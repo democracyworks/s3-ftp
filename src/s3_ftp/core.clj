@@ -12,7 +12,7 @@
   (:gen-class))
 
 (def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "PASV" "TYPE"
-                        "QUIT" "STOR" "CWD"})
+                        "QUIT" "STOR"})
 
 (defn- user-config [username]
   (config :user-overrides username))

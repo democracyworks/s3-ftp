@@ -8,7 +8,8 @@
 (defn run-server [tests]
   (with-redefs [sqs/create-queue (fn [_ queue-name] queue-name)
                 sqs/send (constantly nil)
-                s3/put-object (constantly nil)]
+                s3/put-object (constantly nil)
+                allowed-commands (conj allowed-commands "CWD")] ; miner.ftp likes to CWD on connect
     (let [server (start-server)]
       (tests)
       (.stop server))))

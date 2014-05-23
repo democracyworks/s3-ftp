@@ -13,5 +13,7 @@
                  [turbovote.resource-config "0.1.1"]]
   :main s3-ftp.core
   :profiles {:build [:uberjar]
-             :uberjar {:aot [s3-ftp.core]}}
+             :uberjar {:aot [s3-ftp.core]}
+             :test {:dependencies [[com.velisco/clj-ftp "0.3.0"]]
+                    :resource-paths ["test-resources"]}}
   :uberjar-name "s3-ftp.jar")

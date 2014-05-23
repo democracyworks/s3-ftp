@@ -11,9 +11,27 @@
            [org.apache.ftpserver.ftplet DefaultFtplet FtpletResult])
   (:gen-class))
 
-(def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "PASV" "TYPE" "QUIT" "STOR"})
+(def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "PASV" "TYPE"
+                        "QUIT" "STOR"})
 
-(defn S3CopierFtplet [sqs-client sqs-queue]
+(defn- user-config [username]
+  (config :user-overrides username))
+
+(defn- user-or-default-config [username key-path]
+  (if-let [uc (user-config username)]
+    (get-in uc key-path)
+    (apply config key-path)))
+
+(defn- s3-bucket [username]
+  (user-or-default-config username [:aws :s3 :bucket]))
+
+(defn- sqs-queue-name [username]
+  (user-or-default-config username [:aws :sqs :queue]))
+
+(defn- create-sqs-queue [sqs-client username]
+  (sqs/create-queue sqs-client (sqs-queue-name username)))
+
+(defn S3CopierFtplet [sqs-client]
   (proxy [DefaultFtplet] []
     (beforeCommand [session request]
       (let [cmd (-> request (.getCommand) clojure.string/upper-case)]
@@ -21,27 +39,31 @@
           (proxy-super beforeCommand session request)
           FtpletResult/DISCONNECT)))
     (onUploadEnd [session request]
-      (let [user-home (-> session
-                          (.getUser)
-                          (.getHomeDirectory))
+      (let [user-home (-> session (.getUser) (.getHomeDirectory))
             curr-dir (-> session
                          (.getFileSystemView)
                          (.getWorkingDirectory)
                          (.getAbsolutePath))
             filename (.getArgument request)
             file (File. (str user-home curr-dir filename))
-            s3-bucket (config :aws :s3 :bucket)]
-        (try (s3/put-object (config :aws :creds)
-                            s3-bucket
-                            filename file)
-             (sqs/send sqs-client sqs-queue (pr-str {:bucket s3-bucket
-                                                     :filename filename}))
-             (.delete file)
-             (catch Exception e (logging/error (str "S3 Upload failed: "
+            username (-> session (.getUser) (.getName) keyword)
+            bucket (s3-bucket username)
+            queue (create-sqs-queue sqs-client username)]
+        (try (s3/put-object (config :aws :creds) bucket filename file)
+             (try (sqs/send sqs-client queue (pr-str {:bucket bucket
+                                                      :filename filename}))
+                  (try (.delete file)
+                       (catch Exception e (logging/error
+                                           (str "Unable to delete local file: "
+                                                (.getMessage e)))))
+                  (catch Exception e (logging/error
+                                      (str "SQS message send failed: "
+                                           (.getMessage e)))))
+             (catch Exception e (logging/error (str "S3 upload failed: "
                                                     (.getMessage e)))))
         nil))))
 
-(defn user-manager []
+(defn- user-manager []
   (let [user-file (-> "users.properties"
                       (clojure.java.io/resource)
                       (.toURI)
@@ -50,31 +72,35 @@
                                (.setFile user-file))]
     (.createUserManager user-manager-factory)))
 
-(defn data-connection-configuration [config]
+(defn- data-connection-configuration [config]
   (let [factory (DataConnectionConfigurationFactory.)]
     (some->> config :passive-ports (.setPassivePorts factory))
     (some->> config :passive-external-address (.setPassiveExternalAddress factory))
     (.createDataConnectionConfiguration factory)))
 
-(defn create-client []
+(defn- create-sqs-client []
   (let [client (if (config :aws :creds)
                  (sqs/create-client (config :aws :creds :access-key)
                                     (config :aws :creds :secret-key))
                  (sqs/create-client))]
-    (.setRegion client (config :aws :sqs :region))
-    client))
+    (doto client (.setRegion (config :aws :sqs :region)))))
 
-(defn -main []
-  (let [sqs-client (create-client)
-        sqs-queue (sqs/create-queue sqs-client (config :aws :sqs :queue))
+(defn start-server []
+  (let [sqs-client (create-sqs-client)
         server-factory (FtpServerFactory.)
         active-port (or (config :ftp :active-port) 2221)
         listener-factory (doto (ListenerFactory.)
                            (.setPort active-port)
-                           (.setDataConnectionConfiguration (data-connection-configuration (config :ftp))))
+                           (.setDataConnectionConfiguration
+                            (data-connection-configuration (config :ftp))))
         server (.createServer
                 (doto (FtpServerFactory.)
                   (.addListener "default" (.createListener listener-factory))
                   (.setUserManager (user-manager))
-                  (.setFtplets (java.util.HashMap. {"s3CopierFtplet" (S3CopierFtplet sqs-client sqs-queue)}))))]
-    (.start server)))
+                  (.setFtplets (java.util.HashMap.
+                                {"s3CopierFtplet"
+                                 (S3CopierFtplet sqs-client)}))))]
+    (doto server (.start))))
+
+(defn -main []
+  (start-server))

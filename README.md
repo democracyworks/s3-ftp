@@ -54,6 +54,9 @@ To enable TLS, you need to provide a Keystore file with the server's certificate
 
 If you are testing with a self-signed certificate, you'll also need that certificate installed in the Truststore, and you can see how to configure that in the sample-config.edn as well.
 
+One way to test that the TLS is working is to use a curl command like this:
+`curl -3 -v --ftp-ssl -T FILENAME ftp://USERNAME:PASSWORD@SERVER:PORT`
+
 ## License
 
 Copyright © 2014 Democracy Works, Inc.

@@ -1,0 +1,13 @@
+{:aws {:creds {:access-key "AWS-ACCESS-KEY"
+               :secret-key "AWS-SECRET-KEY"}
+       :s3 {:bucket "BUCKET-NAME"}
+       :sqs {:region #aws/region "US_WEST_2"
+             :queue "SQS-QUEUE-NAME"}}
+ :ftp {:passive-external-address "localdocker" ; optional. overrides using machines hostname
+       :passive-ports "1234-1235" ; optional. overrides default passive ports
+       :active-port 2221 ; optional. overrides default active port
+       }
+ :ssl {:keystore {:filename "YOUR-KEYSTORE.jks"
+                  :password "YOUR-KEYSTORE-PASSWORD"}
+       :truststore {:filename "YOUR-TRUSTSTORE"
+                    :password "YOUR-TRUSTSTORE-PASSWORD"}}}

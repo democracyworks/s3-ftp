@@ -48,6 +48,15 @@ This image contains no configuration and cannot be run. You need to build anothe
 
 Finally, run the docker image making sure to expose your configured active and passive ports.
 
+## TLS
+
+To enable TLS, you need to provide a Keystore file with the server's certificate and private key installed, which you do using the keytool command [see here](http://docs.oracle.com/javase/1.5.0/docs/tooldocs/solaris/keytool.html). To see a sample for how to configure s3-ftp to use the keystore, look at the sample-config.edn in dev-resources, and place the Keystore file into resources. 
+
+If you are testing with a self-signed certificate, you'll also need that certificate installed in the Truststore, and you can see how to configure that in the sample-config.edn as well.
+
+One way to test that the TLS is working is to use a curl command like this:
+`curl -3 -v --ftp-ssl -T FILENAME ftp://USERNAME:PASSWORD@SERVER:PORT`
+
 ## License
 
 Copyright © 2014 Democracy Works, Inc.

@@ -1,4 +1,4 @@
-FROM democracyworks/clojure-api:latest
+FROM quay.io/democracyworks/clojure-api:latest
 MAINTAINER Democracy Works, Inc. <dev@turbovote.org>
 
 ONBUILD ADD ./resources/ /var/local/s3-ftp/resources/

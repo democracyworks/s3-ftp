@@ -7,7 +7,7 @@
        :passive-ports "1234-1235" ; optional. overrides default passive ports
        :active-port 2221 ; optional. overrides default active port
        }
- :ssl {:keystore {:filename "YOUR-KEYSTORE.jks"
-                  :password "YOUR-KEYSTORE-PASSWORD"}
-       :truststore {:filename "YOUR-TRUSTSTORE"
-                    :password "YOUR-TRUSTSTORE-PASSWORD"}}}
+ :ssl {:keystore {:filename "keystore.jks"
+                  :password "totally_insecure"}
+       :truststore {:filename "truststore.jks"
+                    :password "totally_insecure"}}}

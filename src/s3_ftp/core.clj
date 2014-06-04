@@ -50,9 +50,13 @@
                          (.getAbsolutePath))
             filename (.getArgument request)
             file (File. (str user-home curr-dir filename))
+            file-size (.length file)
             username (-> session (.getUser) (.getName) keyword)
             bucket (s3-bucket username)
             queue (create-sqs-queue sqs-client username)]
+        (if (> file-size 0)
+          (logging/info (str filename " uploaded " file-size " bytes"))
+          (logging/warn (str filename " is zero bytes")))
         (try (s3/put-object (config :aws :creds) bucket filename file)
              (try (sqs/send sqs-client queue (pr-str {:bucket bucket
                                                       :filename filename}))

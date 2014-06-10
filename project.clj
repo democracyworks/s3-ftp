@@ -5,12 +5,13 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [clojure-tools "1.1.2"]
-                 [org.apache.ftpserver/ftpserver-core "1.0.6"]
+                 [org.apache.ftpserver/ftpserver-core "1.0.6" :exclusions [org.slf4j/slf4j-api]]
                  [org.apache.ftpserver/ftplet-api "1.0.6"]
-                 [org.slf4j/slf4j-jdk14 "1.5.2" :exclusions [org.slf4j/slf4j-api]]
+                 [ch.qos.logback/logback-classic "1.0.13"]
                  [clj-aws-s3 "0.3.8"]
                  [com.cemerick/bandalore "0.0.5"]
                  [turbovote.resource-config "0.1.1"]]
+  :resource-paths ["config", "resources"]
   :main s3-ftp.core
   :profiles {:build [:uberjar]
              :uberjar {:aot [s3-ftp.core]}

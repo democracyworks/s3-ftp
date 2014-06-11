@@ -14,7 +14,7 @@
   (:gen-class))
 
 (def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "PASV" "TYPE"
-                        "QUIT" "STOR" "AUTH" "PBSZ" "PROT" "OPTS"})
+                        "QUIT" "STOR" "AUTH" "PBSZ" "PROT" "PORT" "OPTS"})
 
 (defn- user-config [username]
   (config :user-overrides username))

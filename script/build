@@ -9,6 +9,6 @@ echo "Done."
 
 echo "Building s3-ftp..."
 
-docker run -v `pwd`:/s3-ftp democracyworks/s3-ftp-build
+docker run -v "$(pwd)":/s3-ftp democracyworks/s3-ftp-build
 
 echo "Done."

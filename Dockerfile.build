@@ -1,4 +1,4 @@
-FROM democracyworks/clojure-api-build:latest
+FROM quay.io/democracyworks/clojure-api-build:latest
 
 # the WORKDIR will be added to the container as a volume by the build script
 WORKDIR /s3-ftp

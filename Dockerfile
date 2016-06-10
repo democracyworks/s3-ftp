@@ -1,8 +1,19 @@
-FROM quay.io/democracyworks/clojure-api-supervisor:latest
+FROM clojure:lein-2.6.1-alpine
 MAINTAINER Democracy Works, Inc. <dev@democracy.works>
 
-ONBUILD ADD ./resources/ /var/local/s3-ftp/resources/
+RUN mkdir /ftpdata
 
-ADD ./target/s3-ftp.jar /var/local/s3-ftp/
-ADD docker/start-s3-ftp.sh /start-s3-ftp.sh
-ADD docker/supervisord-s3-ftp.conf /etc/supervisor/conf.d/supervisord-s3-ftp.conf
+RUN mkdir -p /usr/src/s3-ftp
+WORKDIR /usr/src/s3-ftp
+
+ADD ./project.clj /usr/src/s3-ftp/project.clj
+
+RUN lein deps
+
+ADD . /usr/src/s3-ftp/
+
+RUN lein uberjar
+
+EXPOSE 21 57649 57650 57651 57652 57653 57654 57655 57656 57657 57658 57659
+
+CMD ["java", "-cp", "/usr/src/s3-ftp/resources:/usr/src/s3-ftp/target/s3-ftp.jar", "s3_ftp.core"]

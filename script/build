@@ -1,14 +1,5 @@
 #!/bin/bash
 
-# Exit if any command fails
 set -e
 
-echo "Building Docker image for s3-ftp build..."
-docker build -t democracyworks/s3-ftp-build - < Dockerfile.build
-echo "Done."
-
-echo "Building s3-ftp..."
-
-docker run -v "$(pwd)":/s3-ftp democracyworks/s3-ftp-build
-
-echo "Done."
+docker build -t quay.io/democracyworks/s3-ftp .

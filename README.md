@@ -30,23 +30,21 @@ the API documentation for [com.amazonaws.regions.Regions](http://docs.aws.amazon
 
 ## Usage
 
-It can be run locally by just using 
+It can be run locally by just using
 
 `lein run`
 
-To run it inside a docker container, first build the uberjar by running
+To run it inside a docker container, run:
 
 `script/build`
 
-Then build your base docker image by running 
-
-`docker build -t democracyworks/s3-ftp .`
-
-This image contains no configuration and cannot be run. You need to build another image that uses `s3-ftp` as it's base image, creates the homedirectory you specified in your `users.properties`, exposes your active and passive ports and has in its build context a `resources` directory containing your `config.edn` and `user.properties` files.
-
-`docker build -t democracyworks/my-s3-ftp path/to/other/dockerfile`
-
 Finally, run the docker image making sure to expose your configured active and passive ports.
+Like this:
+
+`docker run -d -p 21:21 -p 57649:57649 -p 57650:57650 -p 57651:57651 \
+            -p 57652:57652 -p 57653:57653 -p 57654:57654 -p 57655:57655 \
+            -p 57656:57656 -p 57657:57657 -p 57658:57658 -p 57659:57659 \
+            quay.io/democracyworks/s3-ftp`
 
 ## TLS
 

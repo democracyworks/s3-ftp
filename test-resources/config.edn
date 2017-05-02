@@ -3,7 +3,7 @@
        :s3 {:bucket "democracyworks-s3-ftp-test"}
        :sqs {:region #aws/region "US_WEST_2"
              :queue "democracyworks-s3-ftp-test"}}
- :ftp {:passive-external-address "localdocker"
+ :ftp {:passive-external-address "localhost"
        :passive-ports "50120-50121"
        :active-port 50021}
  :user-overrides {:user1 {:aws {:s3 {:bucket "democracyworks-user1-ftp-test"}

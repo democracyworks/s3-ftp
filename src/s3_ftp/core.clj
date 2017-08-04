@@ -1,7 +1,7 @@
 (ns s3-ftp.core
   (:require [aws.sdk.s3 :as s3]
             [cemerick.bandalore :as sqs]
-            [turbovote.resource-config :refer [config]]
+            [turbovote.resource-config :as cfg]
             [clojure.tools.logging :as logging]
             [clojure.java.io :as io]
             [s3-ftp.data-readers])
@@ -17,12 +17,12 @@
                         "QUIT" "STOR" "AUTH" "PBSZ" "PROT" "PORT" "OPTS"})
 
 (defn- user-config [username]
-  (config :user-overrides username))
+  (cfg/config [:user-overrides username] nil))
 
 (defn- user-or-default-config [username key-path]
   (if-let [uc (user-config username)]
     (get-in uc key-path)
-    (apply config key-path)))
+    (cfg/config key-path)))
 
 (defn- s3-bucket [username]
   (user-or-default-config username [:aws :s3 :bucket]))
@@ -57,7 +57,7 @@
         (if (> file-size 0)
           (logging/info (str filename " uploaded " file-size " bytes"))
           (logging/warn (str filename " is zero bytes")))
-        (try (s3/put-object (config :aws :creds) bucket filename file)
+        (try (s3/put-object (cfg/config [:aws :creds]) bucket filename file)
              (try (sqs/send sqs-client queue (pr-str {:bucket bucket
                                                       :filename filename}))
                   (try (.delete file)
@@ -87,11 +87,11 @@
     (.createDataConnectionConfiguration factory)))
 
 (defn- create-sqs-client []
-  (let [client (if (config :aws :creds)
-                 (sqs/create-client (config :aws :creds :access-key)
-                                    (config :aws :creds :secret-key))
+  (let [client (if (cfg/config [:aws :creds] nil)
+                 (sqs/create-client (cfg/config [:aws :creds :access-key])
+                                    (cfg/config [:aws :creds :secret-key]))
                  (sqs/create-client))]
-    (doto client (.setRegion (config :aws :sqs :region)))))
+    (doto client (.setRegion (cfg/config [:aws :sqs :region])))))
 
 (defn- ssl-configuration [listener-factory config]
   "sets the ssl configuration on the ListenerFactory if the config exists"
@@ -108,12 +108,12 @@
 (defn start-server []
   (let [sqs-client (create-sqs-client)
         server-factory (FtpServerFactory.)
-        active-port (or (config :ftp :active-port) 2221)
+        active-port (or (cfg/config [:ftp :active-port] 2221) 2221)
         listener-factory (doto (ListenerFactory.)
                            (.setPort active-port)
                            (.setDataConnectionConfiguration
-                            (data-connection-configuration (config :ftp)))
-                           (ssl-configuration (config :ssl)))
+                            (data-connection-configuration (cfg/config [:ftp])))
+                           (ssl-configuration (cfg/config [:ssl] nil)))
         server (.createServer
                 (doto (FtpServerFactory.)
                   (.addListener "default" (.createListener listener-factory))

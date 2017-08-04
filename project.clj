@@ -10,7 +10,7 @@
                  [ch.qos.logback/logback-classic "1.1.7"]
                  [clj-aws-s3 "0.3.10"]
                  [com.cemerick/bandalore "0.0.6"]
-                 [turbovote.resource-config "0.1.1"]]
+                 [turbovote.resource-config "0.2.1"]]
   :resource-paths ["config", "resources"]
   :main s3-ftp.core
   :profiles {:uberjar {:aot [s3-ftp.core]}

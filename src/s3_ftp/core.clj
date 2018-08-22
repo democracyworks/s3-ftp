@@ -93,6 +93,14 @@
                  (sqs/create-client))]
     (doto client (.setRegion (cfg/config [:aws :sqs :region])))))
 
+(defn- client-authentication
+  [ca-config]
+  (condp = ca-config
+    :need "need"
+    :want "want"
+    "none"))
+
+
 (defn- ssl-configuration [listener-factory config]
   "sets the ssl configuration on the ListenerFactory if the config exists"
   (if config
@@ -103,6 +111,7 @@
       (some->> config :keystore :password (.setKeystorePassword factory))
       (some->> ts-name io/resource io/file (.setTruststoreFile factory))
       (some->> config :truststore :password (.setTruststorePassword factory))
+      (some->> config :client-authentication client-authentication (.setClientAuthentication factory))
       (.setSslConfiguration listener-factory (.createSslConfiguration factory)))))
 
 (defn start-server []

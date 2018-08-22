@@ -53,6 +53,13 @@ To enable TLS, you need to provide a Keystore file with the server's certificate
 One way to test that the TLS is working in dev is to use a curl command like this:
 `curl -3 -v -k --ftp-ssl -T FILENAME ftp://USERNAME:PASSWORD@SERVER:PORT`
 
+There's an option to set the level of Client Authentication required, which amounts to
+NEED (:need), WANT (:want) and NONE (:none or default). Just set the value like:
+```
+{:ssl {:client-authentication :need}}
+```
+as part of the SSL config.
+
 ## License
 
 Copyright © 2014 Democracy Works, Inc.

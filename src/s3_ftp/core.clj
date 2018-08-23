@@ -98,11 +98,13 @@
   (if config
     (let [ks-name (some-> config :keystore :filename)
           ts-name (some-> config :truststore :filename)
+          key-alias (some-> config :key-alias)
           factory (SslConfigurationFactory.)]
       (some->> ks-name io/resource io/file (.setKeystoreFile factory))
       (some->> config :keystore :password (.setKeystorePassword factory))
       (some->> ts-name io/resource io/file (.setTruststoreFile factory))
       (some->> config :truststore :password (.setTruststorePassword factory))
+      (some->> key-alias (.setKeyAlias factory))
       (.setSslConfiguration listener-factory (.createSslConfiguration factory)))))
 
 (defn start-server []

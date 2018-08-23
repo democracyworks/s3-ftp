@@ -16,6 +16,8 @@
 (def allowed-commands #{"USER" "PASS" "SYST" "FEAT" "PWD" "EPSV" "PASV" "TYPE"
                         "QUIT" "STOR" "AUTH" "PBSZ" "PROT" "PORT" "OPTS"})
 
+(def secured-commands #{"USER" "PASS"})
+
 (defn- user-config [username]
   (cfg/config [:user-overrides username] nil))
 
@@ -33,12 +35,29 @@
 (defn- create-sqs-queue [sqs-client username]
   (sqs/create-queue sqs-client (sqs-queue-name username)))
 
+(defn check-secure
+  "Checks to see if we're requiring ssl, returning true always if we are not.
+  If we are, it checks to see if the command is one that needs to be secure
+  first, and if it is, checks the session to see if it is secure.
+
+  If the command isn't a secured one, or it is and the session is secure,
+  it returns true, otherwise false."
+  [cmd session]
+  (if (cfg/config [:require-ssl] false)
+    (or (not (secured-commands cmd))
+        (.isSecure session))
+    true))
+
 (defn S3CopierFtplet [sqs-client]
   (proxy [DefaultFtplet] []
     (beforeCommand [session request]
       (let [cmd (-> request (.getCommand) clojure.string/upper-case)]
         (if (allowed-commands cmd)
-          (proxy-super beforeCommand session request)
+          (if (check-secure cmd session)
+            (proxy-super beforeCommand session request)
+            (do
+              (logging/error "Attmepted to issue secure command on insecure session: " cmd)
+              FtpletResult/DISCONNECT))
           (do
             (logging/error "Command not allowed: " cmd)
             FtpletResult/DISCONNECT))))
@@ -98,13 +117,11 @@
   (if config
     (let [ks-name (some-> config :keystore :filename)
           ts-name (some-> config :truststore :filename)
-          key-alias (some-> config :key-alias)
           factory (SslConfigurationFactory.)]
       (some->> ks-name io/resource io/file (.setKeystoreFile factory))
       (some->> config :keystore :password (.setKeystorePassword factory))
       (some->> ts-name io/resource io/file (.setTruststoreFile factory))
       (some->> config :truststore :password (.setTruststorePassword factory))
-      (some->> key-alias (.setKeyAlias factory))
       (.setSslConfiguration listener-factory (.createSslConfiguration factory)))))
 
 (defn start-server []
@@ -113,7 +130,6 @@
         active-port (or (cfg/config [:ftp :active-port] 2221) 2221)
         listener-factory (doto (ListenerFactory.)
                            (.setPort active-port)
-                           (.setImplicitSsl (cfg/config [:ssl :implicit-ssl] false))
                            (.setDataConnectionConfiguration
                             (data-connection-configuration (cfg/config [:ftp])))
                            (ssl-configuration (cfg/config [:ssl] nil)))

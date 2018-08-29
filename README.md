@@ -53,6 +53,22 @@ To enable TLS, you need to provide a Keystore file with the server's certificate
 One way to test that the TLS is working in dev is to use a curl command like this:
 `curl -3 -v -k --ftp-ssl -T FILENAME ftp://USERNAME:PASSWORD@SERVER:PORT`
 
+The above allows a client to enable SSL, but doesn't require it. As more protection, you
+can add the config
+
+```
+:require-ssl true
+```
+
+to the main configuration (at the root level) and it will force the users to secure the
+channel prior to issuing either the USER or PASS commands. It doesn't completely prevent users
+from attempting to send their credentials in the clear, but makes it harder for both
+of them to be transmitted clear, and impossible in a single session.
+
+The Apache server has SSL configuration options that were explored, such as turning on
+implicit ssl, but none of them seemed compatible with our usual tools, so this approach
+is being taken instead.
+
 ## License
 
 Copyright © 2014 Democracy Works, Inc.
